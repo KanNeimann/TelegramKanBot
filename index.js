@@ -39,6 +39,17 @@ bot.on(['/memide'], (msg) => {
     bot.sendMessage(msg.chat.id, `Te mide ${rndNumber}cm @${msg.from.first_name}`)
 })
 
+bot.on(['/opciones'], (msg) => {
+    let options = msg.text.split(',')
+
+    const opcionUno = options[0].replace('/opciones', '')
+    const opcionDos = options[1]
+
+    Math.random() < 1 / 2 ?
+        bot.sendMessage(msg.chat.id, `${opcionUno}, @${msg.from.first_name}`) :
+        bot.sendMessage(msg.chat.id, `${opcionDos}, @${msg.from.first_name}`)
+})
+
 /* bot.on(['/motivacion'], (msg) => {
     const mensaje = Math.floor(Math.random() * 50)
 
