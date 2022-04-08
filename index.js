@@ -80,24 +80,27 @@ bot.on(['/motivacion', '/m'], (msg) => {
     });
 }) */
 
-bot.on(['/newuser'], (msg) => {
+bot.on(['/newuser'], (msg) => { // Funcionando
     if (!personas.find(({ username }) => username === msg.from.username)) {
         const a = this[`persona` + i] = new Persona(msg.from.username)
         personas.push(a)
         bot.sendMessage(msg.chat.id, `Se creo tu usuario ${msg.from.first_name}`)
-        console.log(personas[0])
     } else {
         bot.sendMessage(msg.chat.id, `Ya estas registrado ${msg.from.first_name}`)
     }
 })
 
-bot.on(['/deuda'], (msg) => { //corroborar si aparecen deudas
+bot.on(['/deuda'], (msg) => { // Funcionando
     const index = personas.findIndex(({ username }) => username === msg.from.username)
     if (index !== -1) {
         if (personas[index].getDeudas().length === 0) {
             bot.sendMessage(msg.chat.id, `No tenes deudas ${msg.from.first_name}`)
         } else {
-            bot.sendMessage(msg.chat.id, `Tus deudas ${personas[index].deudas}`)
+            let deudasStr = 'Tus deudas:'
+            personas[index].getDeudas().map((deuda) => {
+                deudasStr = deudasStr.concat(`\n      -\$${deuda.monto} ${deuda.detalle} a ${deuda.acreedor}`)
+            })
+            bot.sendMessage(msg.chat.id, deudasStr)
         }
     } else {
         bot.sendMessage(msg.chat.id, `No estas registrado, proba /newuser ${msg.from.first_name}`)
@@ -105,17 +108,15 @@ bot.on(['/deuda'], (msg) => { //corroborar si aparecen deudas
 
 })
 
-bot.on(['/setdeuda'], (msg) => {
+bot.on(['/setdeuda'], (msg) => {    // Funcionando
 
-    let tarea = msg.text.replace('/setdeuda ', '')
-    console.log(tarea)
+    let deudaArr = msg.text.replace('/setdeuda ', '').split(' ')
+    const [acreedor, monto, detalle] = deudaArr
 
     const index = personas.findIndex(({ username }) => username === msg.from.username)
     if (index !== -1) {
         const persona = personas[index]
-        persona.setDeuda({ acreedor: 'aa', monto: 20, detalle: 'asddasd' })
-        console.log(personas[index].deuda)
-
+        persona.setDeuda({ acreedor: acreedor, monto: Number(monto), detalle: detalle })
     } else {
         bot.sendMessage(msg.chat.id, `No estas registrado, proba /newuser ${msg.from.first_name}`)
     }
@@ -126,7 +127,7 @@ bot.on(['/pagardeuda', '/p'], (msg) => {
 
 })
 
-bot.on(['/todo'], (msg) => {
+bot.on(['/todo'], (msg) => {        // Funcionando
     const index = personas.findIndex(({ username }) => username === msg.from.username)
     if (index !== -1) {
         if (personas[index].toDos.length === 0) {
@@ -144,8 +145,8 @@ bot.on(['/todo'], (msg) => {
 
 })
 
-bot.on(['/settask'], (msg) => {
-    let tarea = msg.text.replace('/settask ', '')
+bot.on(['/settask'], (msg) => {     // Funcionando
+    let tarea = msg.text.replace('/settask ', '').replace(' ', '')
     const index = personas.findIndex(({ username }) => username === msg.from.username)
 
     if (index !== -1) {
