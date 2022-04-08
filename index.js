@@ -1,20 +1,33 @@
 const Telebot = require("telebot")
 const CONSTANTS = require("./constants")
+const Persona = require('./Persona')
+// const ToDo = require('./ToDo.js')
 const axios = require('axios').default
 
 const bot = new Telebot({
     token: CONSTANTS.TELEGRAM_TOKEN
 })
+let i = 0
+const personas = []
+
+const isPrime = num => {
+    for (let i = 2, s = Math.sqrt(num); i <= s; i++)
+        if (num % i === 0) return false;
+    return num > 1;
+}
 
 bot.on(["/razon", "/r"], (msg) => {
     const datesition = Date.now()
     let message
     if (datesition % 2 == 0) {
-        message = `Tenes la razón @${msg.from.first_name} `
+        message = `Tenes razón @${msg.from.first_name} `
     } else if (datesition % 7 == 0) {
         message = `AGUANTE BOKITA!`
     } else {
-        message = `No tenes la razón @${msg.from.first_name}`
+        message = `No tenes razón @${msg.from.first_name}`
+    }
+    if (isPrime(datesition)) {
+        message = message.concat(`, numero primo del dia: ${datesition}`)
     }
     bot.sendMessage(msg.chat.id, message)
 })
@@ -39,21 +52,214 @@ bot.on(['/memide'], (msg) => {
     bot.sendMessage(msg.chat.id, `Te mide ${rndNumber}cm @${msg.from.first_name}`)
 })
 
-bot.on(['/opciones'], (msg) => {
-    let options = msg.text.split(',')
+bot.on(['/opciones', '/o'], (msg) => {
 
-    const opcionUno = options[0].replace('/opciones', '')
-    const opcionDos = options[1]
+    let newMsg = msg.text.replace('/opciones', '').split(',')
+    let options = newMsg.map((element) => element.replace(' ', ''))
 
-    Math.random() < 1 / 2 ?
-        bot.sendMessage(msg.chat.id, `${opcionUno}, @${msg.from.first_name}`) :
-        bot.sendMessage(msg.chat.id, `${opcionDos}, @${msg.from.first_name}`)
+    const rndNumber = Math.floor(Math.random() * options.length)
+
+    bot.sendMessage(msg.chat.id, `${options[rndNumber]}, @${msg.from.first_name}`)
 })
 
-/* bot.on(['/motivacion'], (msg) => {
-    const mensaje = Math.floor(Math.random() * 50)
+bot.on(['/motivacion', '/m'], (msg) => {
+    axios.get('https://frasedeldia.azurewebsites.net/api/phrase').then((res) => {
+        bot.sendMessage(msg.chat.id, `${res.data.phrase}, ${res.data.author}`);
+    }).catch((err) => {
+        console.error(err)
+    })
+})
 
-    bot.sendMessage(msg.chat.id, mensaje)
+/* bot.on(['/food'], (msg) => {
+
+    axios.get('https://spoonacular-recipe-food-nutrition-v1.p.rapidapi.com/food/jokes/random').then(function (response) {
+        console.log('response.data', response.data);
+        bot.sendMessage(msg.chat.id, response.data.text);
+    }).catch(function (error) {
+        console.error(error);
+    });
 }) */
 
+bot.on(['/newuser'], (msg) => {
+    if (!personas.find(({ username }) => username === msg.from.username)) {
+        const a = this[`persona` + i] = new Persona(msg.from.username)
+        personas.push(a)
+        bot.sendMessage(msg.chat.id, `Se creo tu usuario ${msg.from.first_name}`)
+        console.log(personas[0])
+    } else {
+        bot.sendMessage(msg.chat.id, `Ya estas registrado ${msg.from.first_name}`)
+    }
+})
+
+bot.on(['/deuda'], (msg) => { //corroborar si aparecen deudas
+    const index = personas.findIndex(({ username }) => username === msg.from.username)
+    if (index !== -1) {
+        if (personas[index].getDeudas().length === 0) {
+            bot.sendMessage(msg.chat.id, `No tenes deudas ${msg.from.first_name}`)
+        } else {
+            bot.sendMessage(msg.chat.id, `Tus deudas ${personas[index].deudas}`)
+        }
+    } else {
+        bot.sendMessage(msg.chat.id, `No estas registrado, proba /newuser ${msg.from.first_name}`)
+    }
+
+})
+
+bot.on(['/setdeuda'], (msg) => {
+
+    let tarea = msg.text.replace('/setdeuda ', '')
+    console.log(tarea)
+
+    const index = personas.findIndex(({ username }) => username === msg.from.username)
+    if (index !== -1) {
+        const persona = personas[index]
+        persona.setDeuda({ acreedor: 'aa', monto: 20, detalle: 'asddasd' })
+        console.log(personas[index].deuda)
+
+    } else {
+        bot.sendMessage(msg.chat.id, `No estas registrado, proba /newuser ${msg.from.first_name}`)
+    }
+
+})
+
+bot.on(['/pagardeuda', '/p'], (msg) => {
+
+})
+
+bot.on(['/todo'], (msg) => {
+    const index = personas.findIndex(({ username }) => username === msg.from.username)
+    if (index !== -1) {
+        if (personas[index].toDos.length === 0) {
+            bot.sendMessage(msg.chat.id, `No tenes tareas ${msg.from.first_name}`)
+        } else {
+            let tareasStr = 'Tus tareas:'
+            personas[index].getToDos().map((tarea) => {
+                tareasStr = tareasStr.concat(`\n      -${tarea.tarea}`)
+            })
+            bot.sendMessage(msg.chat.id, tareasStr)
+        }
+    } else {
+        bot.sendMessage(msg.chat.id, `No estas registrado, proba /newuser ${msg.from.first_name}`)
+    }
+
+})
+
+bot.on(['/settask'], (msg) => {
+    let tarea = msg.text.replace('/settask ', '')
+    const index = personas.findIndex(({ username }) => username === msg.from.username)
+
+    if (index !== -1) {
+
+        personas[index].setTask(tarea)
+        bot.sendMessage(msg.chat.id, `Tarea agendada ${msg.from.first_name}!`)
+    } else {
+        bot.sendMessage(msg.chat.id, `No estas registrado, proba /newuser ${msg.from.first_name}`)
+    }
+
+})
+bot.on(['/rmtask', '/rmt'], (msg) => {
+    const index = personas.findIndex(({ username }) => username === msg.from.username)
+
+    if (index !== -1) {
+        bot.button([], 'asd')
+        let tareasStr = 'Ingresa el id a eliminar:'
+        personas[index].getToDos().map((tarea) => {
+            console.log(tarea.tarea)
+            tareasStr = tareasStr.concat(`\n      -${tarea.tarea}  -  ${tarea.tarea.id}`)
+        })
+        bot.sendMessage(msg.chat.id, tareasStr)
+
+        console.log(personas[index].toDos)
+        personas[index].deleteTask(tarea)
+        bot.sendMessage(msg.chat.id, `Tarea agendada ${msg.from.first_name}!`)
+    } else {
+        bot.sendMessage(msg.chat.id, `No estas registrado, proba /newuser ${msg.from.first_name}`)
+    }
+
+})
+
+/* ------------------------------------------------------------------------------ */
+// On commands
+/* bot.on(['/start', '/back'], msg => {
+
+    let replyMarkup = bot.keyboard([
+        ['/buttons', '/inlineKeyboard'],
+        ['/start', '/hide']
+    ], { resize: true });
+
+    return bot.sendMessage(msg.from.id, 'Keyboard example.', { replyMarkup });
+
+});
+
+// Buttons
+bot.on('/buttons', msg => {
+
+    let replyMarkup = bot.keyboard([
+        [bot.button('contact', 'Your contact'), bot.button('location', 'Your location')],
+        ['/back', '/hide']
+    ], { resize: true });
+
+    return bot.sendMessage(msg.from.id, 'Button example.', { replyMarkup });
+
+});
+
+// Hide keyboard
+bot.on('/hide', msg => {
+    return bot.sendMessage(
+        msg.from.id, 'Hide keyboard example. Type /back to show.', { replyMarkup: 'hide' }
+    );
+});
+
+// On location on contact message
+bot.on(['location', 'contact'], (msg, self) => {
+    return bot.sendMessage(msg.from.id, `Thank you for ${self.type}.`);
+});
+
+// Inline buttons
+bot.on('/inlineKeyboard', msg => {
+
+    let replyMarkup = bot.inlineKeyboard([
+        [
+            bot.inlineButton('callback', { callback: 'this_is_data' }),
+            bot.inlineButton('inline', { inline: 'some query' })
+        ], [
+            bot.inlineButton('url', { url: 'https://telegram.org' })
+        ]
+    ]);
+
+    return bot.sendMessage(msg.from.id, 'Inline keyboard example.', { replyMarkup });
+
+});
+
+// Inline button callback
+bot.on('callbackQuery', msg => {
+    // User message alert
+    return bot.answerCallbackQuery(msg.id, `Inline button callback: ${msg.data}`, true);
+});
+
+// Inline query
+bot.on('inlineQuery', msg => {
+
+    const query = msg.query;
+    const answers = bot.answerList(msg.id);
+
+    answers.addArticle({
+        id: 'query',
+        title: 'Inline Query',
+        description: `Your query: ${query}`,
+        message_text: 'Click!'
+    });
+
+    return bot.answerQuery(answers);
+
+}); */
+
+/* bot.on(['/all'], async (msg) => {
+    console.log(msg.chat.id);
+    console.log(await getChaat(msg.chat.id));
+})
+async function getChaat(id) {
+    return await bot.getChatMember(id, 0)
+}
+ */
 bot.start()
