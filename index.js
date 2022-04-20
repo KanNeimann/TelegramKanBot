@@ -9,13 +9,26 @@ const bot = new Telebot({
 });
 let i = 0;
 const personas = [];
+// Funcion para agregar usuario a personas[]
+bot.on(["/newuser"], (msg) => {
+    // Funcionando
+    if (!personas.find(({ username }) => username === msg.from.username)) {
+        const a = (this[`persona` + i] = new Persona(msg.from.username));
+        personas.push(a);
+        bot.sendMessage(msg.chat.id, `Se creo tu usuario ${msg.from.first_name}`);
+    } else {
+        bot.sendMessage(msg.chat.id, `Ya estas registrado ${msg.from.first_name}`);
+    }
+});
 
+//  Funcion define si un numero es primo
 const isPrime = (num) => {
     for (let i = 2, s = Math.sqrt(num); i <= s; i++)
         if (num % i === 0) return false;
     return num > 1;
 };
 
+// Funcion da o no la razon
 bot.on(["/razon", "/r"], (msg) => {
     const datesition = Date.now();
     let message;
@@ -32,6 +45,7 @@ bot.on(["/razon", "/r"], (msg) => {
     bot.sendMessage(msg.chat.id, message);
 });
 
+// Funcion asigna un pokemon a un usuario y lo muestra
 bot.on(["/hoy"], (msg) => {
     const randomPick = Math.floor(Math.random() * 151);
     axios.get("https://pokeapi.co/api/v2/pokemon?limit=151").then((res) => {
@@ -60,6 +74,22 @@ bot.on(["/memide"], (msg) => {
     );
 });
 
+bot.on(["/impuestos"], (msg) => {
+    let numero = msg.text.replace("/impuestos ", "");
+    bot.sendMessage(
+        msg.chat.id,
+        `${(numero * 1.65).toFixed(2)}, @${msg.from.first_name}`
+    );
+});
+
+bot.on(["/reflexione"], (msg) => {
+
+    bot.sendMessage(
+        msg.chat.id,
+        `@${msg.from.first_name} reflexiono, y pide disculpas`
+    );
+});
+
 bot.on(["/opciones", "/o"], (msg) => {
     let newMsg = msg.text.replace("/opciones", "").split(",");
     let options = newMsg.map((element) => element.replace(" ", ""));
@@ -70,6 +100,28 @@ bot.on(["/opciones", "/o"], (msg) => {
         msg.chat.id,
         `${options[rndNumber]}, @${msg.from.first_name}`
     );
+});
+
+bot.on(["/var"], (msg) => {
+    const datesition = Date.now();
+    let persona = msg.text.replace("/var ", "");
+    bot.sendMessage(
+        msg.chat.id,
+        `El var analiza la jugada`
+    );
+    setTimeout(() => {
+        if (datesition % 2 === 0 || datesition % 333 === 0) {
+            bot.sendMessage(
+                msg.chat.id,
+                `Es amarilla para ${persona}`
+            );
+        } else {
+            bot.sendMessage(
+                msg.chat.id,
+                `Es roja para @${persona}`
+            );
+        }
+    }, 200)
 });
 
 bot.on(["/motivacion", "/m"], (msg) => {
@@ -83,7 +135,7 @@ bot.on(["/motivacion", "/m"], (msg) => {
         });
 });
 
-bot.on(["/gato", "/m"], (msg) => {
+/* bot.on(["/gato", "/m"], (msg) => {
     axios
         .get("https://frasedeldia.azurewebsites.net/api/phrase")
         .then((res) => {
@@ -92,7 +144,7 @@ bot.on(["/gato", "/m"], (msg) => {
         .catch((err) => {
             console.error(err);
         });
-});
+}); */
 
 /* bot.on(['/food'], (msg) => {
 
@@ -103,17 +155,6 @@ bot.on(["/gato", "/m"], (msg) => {
         console.error(error);
     });
 }) */
-
-bot.on(["/newuser"], (msg) => {
-    // Funcionando
-    if (!personas.find(({ username }) => username === msg.from.username)) {
-        const a = (this[`persona` + i] = new Persona(msg.from.username));
-        personas.push(a);
-        bot.sendMessage(msg.chat.id, `Se creo tu usuario ${msg.from.first_name}`);
-    } else {
-        bot.sendMessage(msg.chat.id, `Ya estas registrado ${msg.from.first_name}`);
-    }
-});
 
 bot.on(["/deuda"], (msg) => {
     // Funcionando
@@ -191,7 +232,7 @@ bot.on(["/todo"], (msg) => {
 
 bot.on(["/settask"], (msg) => {
     // Funcionando
-    let tarea = msg.text.replace("/settask ", "").replace(" ", "");
+    let tarea = msg.text.replace("/settask ", "");
     const index = personas.findIndex(
         ({ username }) => username === msg.from.username
     );
