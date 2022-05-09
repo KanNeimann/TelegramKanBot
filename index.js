@@ -5,11 +5,11 @@ import Persona from './src/Persona.js'
 
 import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import serviceAccount from './src/telegram-kan-bot-firebase-adminsdk-m0r3j-d5ca61db4c.json' assert {type: 'json'}
+// import serviceAccount from './src/telegram-kan-bot-firebase-adminsdk-m0r3j-d5ca61db4c.json'
 
-/* initializeApp({
-    credential: cert(serviceAccount)
-}) */
+initializeApp({
+    credential: cert(CONSTANTS.FIREBASE_TOKEN)
+})
 
 const bot = new Telebot({
     token: CONSTANTS.TELEGRAM_TOKEN,
