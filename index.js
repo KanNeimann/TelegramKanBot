@@ -1,25 +1,115 @@
-const Telebot = require("telebot");
-const CONSTANTS = require("./constants");
-const Persona = require("./Persona");
-// const ToDo = require('./ToDo.js')
-const axios = require("axios").default;
+import Telebot from 'telebot'
+import axios from 'axios'
+import CONSTANTS from './constants.js'
+import Persona from './src/Persona.js'
+
+import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
+import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
+import serviceAccount from './src/telegram-kan-bot-firebase-adminsdk-m0r3j-d5ca61db4c.json'
+
+/* initializeApp({
+    credential: cert(serviceAccount)
+}) */
 
 const bot = new Telebot({
     token: CONSTANTS.TELEGRAM_TOKEN,
 });
+
+const db = getFirestore();
+
 let i = 0;
-const personas = [];
+const users = db.collection('users');
+
 // Funcion para agregar usuario a personas[]
-bot.on(["/newuser"], (msg) => {
-    // Funcionando
-    if (!personas.find(({ username }) => username === msg.from.username)) {
-        const a = (this[`persona` + i] = new Persona(msg.from.username));
-        personas.push(a);
+bot.on(["/newuser"], async (msg) => {
+
+    const userRef = users.doc(`${msg.from.username}`)
+    const doc = await userRef.get();
+
+    const data = {
+        user: `${msg.from.username}`,
+        pokemonNumber: '',
+        pokemonDate: 0
+    }
+
+    if (!doc.exists) {
+        userRef.set(data)
+        // console.log('Se creo correctamente el usuario!');
         bot.sendMessage(msg.chat.id, `Se creo tu usuario ${msg.from.first_name}`);
     } else {
+        // console.log('Se encuentra registrado el usuario!');
         bot.sendMessage(msg.chat.id, `Ya estas registrado ${msg.from.first_name}`);
     }
 });
+
+/* bot.on(["/actualizar"], async (msg) => {
+    const userRef = users.doc(`${msg.from.username}`)
+    await userRef.update({ pokemon: "raichu" });
+
+    bot.sendMessage(msg.chat.id, 'asd');
+}); */
+
+bot.on(["/pokemon"], async (msg) => {
+
+    const userRef = users.doc(`${msg.from.username}`)
+    const userDoc = await userRef.get()
+
+    const today = new Date()
+
+    if (today.getDate() !== userDoc.data().pokemonDate) {
+        /* Se agrega un pokemon nuevo al user */
+
+        await userRef.update({ pokemonDate: today.getDate() });
+        const randomPick = Math.floor(Math.random() * 151);
+        await userRef.update({ pokemonNumber: randomPick });
+
+        axios.get("https://pokeapi.co/api/v2/pokemon?limit=151").then((res) => {
+            const pokemons = res.data.results;
+            axios
+                .get(
+                    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${randomPick + 1
+                    }.png`,
+                    { responseType: "arraybuffer" }
+                )
+                .then((response) => {
+                    const buffer = Buffer.from(response.data, "base64");
+                    bot.sendPhoto(msg.chat.id, buffer, {
+                        caption: `Hoy estas hecho un ${pokemons[randomPick].name} @${msg.from.first_name}`,
+                    });
+                });
+        });
+
+
+    } else {
+        /* Se toma el pokemon desde la base de datos */
+        const userDoc = await userRef.get()
+
+        const pokemonNumber = userDoc.data().pokemonNumber
+
+        axios.get("https://pokeapi.co/api/v2/pokemon?limit=151").then((res) => {
+            const pokemons = res.data.results;
+            axios
+                .get(
+                    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonNumber + 1
+                    }.png`,
+                    { responseType: "arraybuffer" }
+                )
+                .then((response) => {
+                    const buffer = Buffer.from(response.data, "base64");
+                    bot.sendPhoto(msg.chat.id, buffer, {
+                        caption: `Hoy estas hecho un ${pokemons[pokemonNumber].name} @${msg.from.first_name}`,
+                    });
+                });
+        });
+
+    }
+
+
+});
+
+
+
+
 
 //  Funcion define si un numero es primo
 const isPrime = (num) => {
@@ -46,7 +136,7 @@ bot.on(["/razon", "/r"], (msg) => {
 });
 
 // Funcion asigna un pokemon a un usuario y lo muestra
-bot.on(["/hoy"], (msg) => {
+/* bot.on(["/hoy"], (msg) => {
     const randomPick = Math.floor(Math.random() * 151);
     axios.get("https://pokeapi.co/api/v2/pokemon?limit=151").then((res) => {
         const pokemons = res.data.results;
@@ -63,7 +153,7 @@ bot.on(["/hoy"], (msg) => {
                 });
             });
     });
-});
+}); * /
 
 bot.on(["/memide"], (msg) => {
     const rndNumber = Math.floor(Math.random() * 50);
@@ -156,7 +246,7 @@ bot.on(["/motivacion", "/m"], (msg) => {
     });
 }) */
 
-bot.on(["/deuda"], (msg) => {
+/* bot.on(["/deuda"], (msg) => {
     // Funcionando
     const index = personas.findIndex(
         ({ username }) => username === msg.from.username
@@ -203,9 +293,9 @@ bot.on(["/setdeuda"], (msg) => {
             `No estas registrado, proba /newuser ${msg.from.first_name}`
         );
     }
-});
+}); */
 
-bot.on(["/pagardeuda", "/p"], (msg) => { });
+/* bot.on(["/pagardeuda", "/p"], (msg) => { });
 
 bot.on(["/todo"], (msg) => {
     // Funcionando
@@ -228,9 +318,9 @@ bot.on(["/todo"], (msg) => {
             `No estas registrado, proba /newuser ${msg.from.first_name}`
         );
     }
-});
+}); */
 
-bot.on(["/settask"], (msg) => {
+/* bot.on(["/settask"], (msg) => {
     // Funcionando
     let tarea = msg.text.replace("/settask ", "");
     const index = personas.findIndex(
@@ -273,10 +363,10 @@ bot.on(["/rmtask", "/rmt"], (msg) => {
         );
     }
 });
-
+ */
 /* ------------------------------------------------------------------------------ */
 // AGARRA ESTA WEA
-bot.on(["/removetask"], (msg) => {
+/* bot.on(["/removetask"], (msg) => {
 
 
     const index = personas.findIndex(
@@ -311,9 +401,9 @@ bot.on(["/removetask"], (msg) => {
         { resize: true }
     );
     return bot.sendMessage(msg.chat.id, tareasStr, { replyMarkup });
-});
+}); */
 
-bot.on('/buttons', msg => {
+/* bot.on('/buttons', msg => {
 
     let replyMarkup = bot.keyboard([
         [bot.button('contact', 'Your contact'), bot.button('location', 'Your location')],
@@ -322,12 +412,12 @@ bot.on('/buttons', msg => {
 
     return bot.sendMessage(msg.from.id, 'Button example.', { replyMarkup });
 
-});
-bot.on('/cancelar', msg => {
+}); */
+/* bot.on('/cancelar', msg => {
     return bot.sendMessage(
         msg.from.id, 'Cancelaste.', { replyMarkup: 'hide' }
     );
-});
+}); */
 
 /* bot.on("/removetask", (msg) => {
     let replyMarkup = bot.inlineKeyboard([
