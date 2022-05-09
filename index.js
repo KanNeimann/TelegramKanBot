@@ -5,7 +5,7 @@ import Persona from './src/Persona.js'
 
 import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import serviceAccount from './src/telegram-kan-bot-firebase-adminsdk-m0r3j-d5ca61db4c.json'
+import serviceAccount from './src/telegram-kan-bot-firebase-adminsdk-m0r3j-d5ca61db4c.json' assert {type: 'json'}
 
 /* initializeApp({
     credential: cert(serviceAccount)
@@ -149,11 +149,12 @@ bot.on(["/razon", "/r"], (msg) => {
             .then((response) => {
                 const buffer = Buffer.from(response.data, "base64");
                 bot.sendPhoto(msg.chat.id, buffer, {
-                    caption: `Hoy estas hecho un ${pokemons[randomPick].name} @${msg.from.first_name}` /* , replyToMessage: msg.message_id*/,
+                    caption: `Hoy estas hecho un ${pokemons[randomPick].name} @${msg.from.first_name}` /* , replyToMessage: msg.message_id,
                 });
             });
     });
-}); * /
+}); 
+*/
 
 bot.on(["/memide"], (msg) => {
     const rndNumber = Math.floor(Math.random() * 50);
