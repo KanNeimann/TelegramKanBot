@@ -1,11 +1,18 @@
-// const ToDo = require("./ToDo")
+import { initializeApp, applicationDefault, cert } from 'firebase-admin/app';
+import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
+import serviceAccount from '../src/telegram-kan-bot-firebase-adminsdk-m0r3j-d5ca61db4c.json'
+
+initializeApp({
+    credential: cert(serviceAccount)
+})
+
+const db = getFirestore();
 
 class Persona {
     constructor(username) {
         this.username = username
         this.deudas = []
         this.toDos = []
-
     }
     getToDos() {
         return this.toDos
@@ -43,4 +50,4 @@ class Persona {
         })
     }
 }
-module.exports = Persona
+export default { Persona };
